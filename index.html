@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiteout Survival Rss Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        .building-card {
+            transition: all 0.3s ease;
+        }
+        .building-card:hover {
+            transform: translateY(-5px);
+        }
+        .selected {
+            border-color: #4CAF50 !important; /* Use important to override default border */
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        body {
+            min-height: 100vh;
+        }
+        /* Dark mode styles */
+        .dark {
+            color-scheme: dark;
+        }
+        .dark body {
+            background-color: #1a1a1a;
+            color: #f3f4f6;
+        }
+        .dark .bg-white {
+            background-color: #2d3748;
+        }
+        .dark .text-gray-700, .dark .text-gray-800, .dark .text-gray-900 {
+            color: #f3f4f6;
+        }
+        .dark .border-gray-200 {
+            border-color: #4a5568;
+        }
+        .dark .shadow {
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.3), 0 1px 2px 0 rgba(0,0,0,0.2);
+        }
+        .dark .selected {
+            background-color: rgba(76, 175, 80, 0.2) !important;
+        }
+        .dark input[type="text"] {
+             background-color: #4a5568;
+             border-color: #718096;
+             color: #f3f4f6;
+        }
+        .dark input::placeholder {
+            color: #a0aec0; /* Lighter placeholder for dark mode */
+        }
+        .dark select {
+            background-color: #4a5568; /* Dark background for selects */
+            border-color: #718096;
+            color: #f3f4f6;
+        }
+        .dark .border-green-500 {
+             border-color: #4CAF50 !important;
+        }
+        .dark .bg-green-50 {
+             background-color: rgba(76, 175, 80, 0.15) !important; /* Adjusted dark selected background */
+        }
+         /* Style for the theme toggle slider */
+        #themeToggle:checked + span {
+            background-color: #2563eb; /* Blue when checked */
+        }
+        #themeToggle:checked + span::before {
+            transform: translateX(1.5rem); /* Move the circle to the right */
+        }
+
+        /* Style pour l'onglet actif */
+        .nav-active {
+            border-bottom: 2px solid #3b82f6; /* Bordure bleue */
+            color: #3b82f6; /* Texte bleu */
+        }
+        .dark .nav-active {
+             border-bottom-color: #60a5fa; /* Bordure bleu clair */
+             color: #60a5fa; /* Texte bleu clair */
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-6">
+            <div class="flex items-center">
+                <i class="fas fa-fire text-orange-500 text-2xl mr-2"></i>
+                <h1 class="text-2xl font-bold" id="mainTitle">Whiteout Survival - Resource Calculator</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="langToggle" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">Français</button>
+                <div class="flex items-center">
+                    <span class="mr-2" id="themeLabel">Theme:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="themeToggle" type="checkbox" class="sr-only peer">
+                         <span class="w-12 h-6 bg-gray-300 rounded-full peer dark:bg-gray-600 peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500"></span>
+                    </label>
+                </div>
+            </div>
+        </header>
+        <nav class="mb-6 flex justify-start space-x-4 border-b border-gray-300 dark:border-gray-600 pb-2">
+            <a href="WOSVx.html" id="nav-buildings"
+               class="px-4 py-2 rounded-t-lg font-medium text-sm transition">
+               Building Calculator
+            </a>
+            <a href="chief_gear_calculator.html" id="nav-gear"
+               class="px-4 py-2 rounded-t-lg font-medium text-sm transition">
+               Gear Calculator
+            </a>
+        </nav>
+          
+
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="tabs flex border-b overflow-x-auto dark:border-gray-600">
+                <button class="tab-btn py-2 px-4 font-semibold text-blue-500 border-b-2 border-blue-500 whitespace-nowrap" data-category="all" id="allBuildingsTab">All Buildings</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-500 whitespace-nowrap" data-category="military" id="militaryTab">Military</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-500 whitespace-nowrap" data-category="production" id="productionTab">Production</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-500 whitespace-nowrap" data-category="living" id="livingTab">Living</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-500 whitespace-nowrap" data-category="utility" id="utilityTab">Utility</button>
+            </div>
+
+            <div class="my-4 flex flex-wrap justify-between items-center">
+                <h2 class="text-xl font-semibold mb-2 sm:mb-0" id="selectionTitle">Select Buildings</h2>
+                <div class="flex flex-wrap">
+                    <button id="selectAllBtn" class="px-3 py-1 bg-green-500 text-white rounded-md mr-2 mb-2 sm:mb-0 hover:bg-green-600 transition">Select All</button>
+                    <button id="deselectAllBtn" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition">Deselect All</button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <input type="text" id="searchInput" placeholder="Search buildings..."
+                       class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div id="buildingsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <h2 class="text-xl font-semibold mb-4" id="buffsTitle">Construction Buffs</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <h3 class="font-semibold mb-2" id="heroBuffsTitle">Hero Buffs</h3>
+                     <div class="mb-2">
+                         <label for="zinmanLevelSelect" class="block text-sm font-medium mb-1" id="zinmanLevelLabel">Zinman Level (RSS Reduc.):</label>
+                         <select id="zinmanLevelSelect" class="p-1 border rounded w-full dark:bg-gray-600 dark:border-gray-500">
+                            <option value="0"  selected id="zinmanOpt0"></option>   <!-- ← “Non débloqué” -->
+                            <option value="0.03" id="zinmanOpt1">Level 1 (3%)</option>              <!-- ← “Niveau 1” -->
+                            <option value="0.06" id="zinmanOpt2">Level 2 (6%)</option>
+                            <option value="0.09" id="zinmanOpt3">Level 3 (9%)</option>
+                            <option value="0.12" id="zinmanOpt4">Level 4 (12%)</option>
+                            <option value="0.15" id="zinmanOpt5">Level 5 (15%)</option>
+                        </select>
+                     </div>
+                      <label class="flex items-center mb-2 mt-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="zinmanTimeBuff"> <span class="ml-2" id="zinmanTimeBuffLabel">Zinman Vitesse Const. (15%)</span> </label>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2" id="vipBuffsTitle">VIP Buffs</h3>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="vip4Buff">
+                        <span class="ml-2" id="vip4BuffLabel">VIP Level 4 (10%)</span>
+                    </label>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="vip9Buff">
+                        <span class="ml-2" id="vip9BuffLabel">VIP Level 9 (20%)</span>
+                    </label>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2" id="petBuffsTitle">Pet Buffs</h3>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="hyenaBuff">
+                        <span class="ml-2" id="hyenaBuffLabel">Cave Hyena Builder's Aide (15%)</span>
+                    </label>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2" id="chiefBuffsTitle">Chief Orders</h3>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="doubleTimeBuff">
+                        <span class="ml-2" id="doubleTimeBuffLabel">Double Time (20%)</span>
+                    </label>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2" id="islandBuffsTitle">Island Buffs</h3>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="vpBuff">
+                        <span class="ml-2" id="vpBuffLabel">Vice President (15%)</span>
+                    </label>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2" id="otherBuffsTitle">Other Buffs</h3>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="allianceBuff">
+                        <span class="ml-2" id="allianceBuffLabel">Alliance (15%)</span>
+                    </label>
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded" id="stateBuff">
+                        <span class="ml-2" id="stateBuffLabel">State (10%)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-red-500 relative">
+             <button id="copyBtn" class="absolute top-2 right-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-copy"></i>
+            </button>
+            <h2 class="text-xl font-semibold mb-4" id="resultsTitle">Required Resources</h2>
+            <div id="resultsContainer">
+                <p id="noSelectionMessage" class="text-gray-500 italic">Select at least one building to see the required resources.</p>
+                <div id="resourcesResults" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <h3 class="font-semibold mb-2" id="basicResourcesTitle">Basic Resources</h3>
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-tree text-yellow-700 w-5"></i>
+                                <span class="ml-2" id="woodLabel">Wood:</span>
+                                <span id="woodResult" class="ml-auto font-semibold">0</span>
+                            </div>
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-fire-alt text-gray-700 dark:text-gray-300 w-5"></i>
+                                <span class="ml-2" id="coalLabel">Coal:</span>
+                                <span id="coalResult" class="ml-auto font-semibold">0</span>
+                            </div>
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-hammer text-gray-500 dark:text-gray-400 w-5"></i>
+                                <span class="ml-2" id="ironLabel">Iron:</span>
+                                <span id="ironResult" class="ml-auto font-semibold">0</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-drumstick-bite text-red-500 w-5"></i>
+                                <span class="ml-2" id="meatLabel">Meat:</span>
+                                <span id="meatResult" class="ml-auto font-semibold">0</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2" id="specialResourcesTitle">Special Resources</h3>
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-gem text-orange-500 w-5"></i>
+                                <span class="ml-2" id="crystalsLabel">Fire Crystals:</span>
+                                <span id="crystalsResult" class="ml-auto font-semibold">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="font-semibold mb-2" id="timeTitle">Construction Time</h3>
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-clock text-blue-500 w-5"></i>
+                            <span class="ml-2" id="normalTimeLabel">Normal time:</span>
+                            <span id="normalTimeResult" class="ml-auto font-semibold">0</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-bolt text-green-500 w-5"></i>
+                            <span class="ml-2" id="buffedTimeLabel">Time with buffs:</span>
+                            <span id="buffedTimeResult" class="ml-auto font-semibold">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="buildingDetailsContainer" class="bg-white rounded-lg shadow-md p-4 mb-6" style="display: none;">
+            <h2 class="text-xl font-semibold mb-4" id="detailsTitle">Upgrade Details</h2>
+            <div id="buildingDetailsList" class="space-y-4">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Language data
+        const translations = {
+            en: {
+                title: "Whiteout Survival - Resource Calculator", languageButton: "Français", themeLabel: "Theme:",
+                allBuildings: "All Buildings", military: "Military", production: "Production", living: "Living", utility: "Utility",
+                selectionTitle: "Select Buildings", searchPlaceholder: "Search buildings...", selectAll: "Select All", deselectAll: "Deselect All",
+                buffsTitle: "Construction Buffs", heroBuffsTitle: "Hero Buffs",
+                zinmanLevelLabel: "Zinman Level (RSS Reduc.):", // Changed
+                zinmanTimeBuffLabel: "Zinman Const. Speed (15%)", // Added for clarity
+                vipBuffsTitle: "VIP Buffs", vip4BuffLabel: "VIP Level 4 (10%)", vip9BuffLabel: "VIP Level 9 (20%)",
+                petBuffsTitle: "Pet Buffs", hyenaBuffLabel: "Cave Hyena Builder's Aide (15%)", chiefBuffsTitle: "Chief Orders",
+                doubleTimeBuffLabel: "Double Time (20%)", islandBuffsTitle: "Island Buffs", vpBuffLabel: "Vice President (15%)",
+                otherBuffsTitle: "Other Buffs", allianceBuffLabel: "Alliance (15%)", stateBuffLabel: "State (10%)",
+                resultsTitle: "Required Resources", noSelection: "Select at least one building to see the required resources.",
+                basicResourcesTitle: "Basic Resources", specialResourcesTitle: "Special Resources", wood: "Wood:", coal: "Coal:", iron: "Iron:", meat: "Meat:",
+                crystals: "Fire Crystals:", timeTitle: "Construction Time", normalTime: "Normal time:", buffedTime: "Time with buffs:",
+                detailsTitle: "Upgrade Details", currentLevel: "Current level:", targetLevel: "Target level:", from: "From", to: "to", level: "Level",
+                copy: "Copy", copied: "Copied!", furnace: "Furnace (FC)", embassy: "Embassy", infantryCamp: "Infantry Camp", lancerCamp: "Lancer Camp",
+                marksmanCamp: "Marksman Camp", researchCenter: "Research Center", infirmary: "Infirmary", commandCenter: "Command Center",
+                chiefsHouse: "Chief's House", sawmill: "Sawmill", coalMine: "Coal Mine", ironMine: "Iron Mine", huntersHut: "Hunter's Hut",
+                shelter: "Shelter", cookhouse: "Cookhouse", clinic: "Clinic", barricade: "Barricade", warAcademy: "War Academy",
+                storehouse: "Storehouse", enlistmentOffice: "Enlistment Office", days: "d", hours: "h", minutes: "m", seconds: "s",
+                phaseDetails: "Phase Details", resources: "Resources", showDetails: "Show detailed phases", hideDetails: "Hide detailed phases",
+                phase: "Phase", stage: "Stage",
+                navBuildings: "Building Calculator" ,// NOUVEAU
+                navGear: "Gear Calculator",     // NOUVEAU
+
+                /* ----------- ZINMAN options ----------- */
+                zinmanNotUnlocked: "Not unlocked (0%)",
+                zinmanLevel1:      "Level 1 (3%)",
+                zinmanLevel2:      "Level 2 (6%)",
+                zinmanLevel3:      "Level 3 (9%)",
+                zinmanLevel4:      "Level 4 (12%)",
+                zinmanLevel5:      "Level 5 (15%)"
+                        },
+            fr: {
+                title: "Whiteout Survival - Calculateur de Ressources", languageButton: "English", themeLabel: "Thème:",
+                allBuildings: "Tous les Bâtiments", military: "Militaire", production: "Production", living: "Habitat", utility: "Utilité",
+                selectionTitle: "Sélectionner les Bâtiments", searchPlaceholder: "Rechercher des bâtiments...", selectAll: "Tout Sélectionner", deselectAll: "Tout Désélectionner",
+                buffsTitle: "Buffs de Construction", heroBuffsTitle: "Buffs de Héros",
+                zinmanLevelLabel: "Niveau Zinman (Réduc. RSS):", // Changed
+                zinmanTimeBuffLabel: "Zinman Vitesse Const. (15%)", // Added for clarity
+                vipBuffsTitle: "Buffs VIP", vip4BuffLabel: "VIP Niveau 4 (10%)", vip9BuffLabel: "VIP Niveau 9 (20%)",
+                petBuffsTitle: "Buffs d'Animaux", hyenaBuffLabel: "Hyène des Cavernes (15%)", chiefBuffsTitle: "Ordres du Chef",
+                doubleTimeBuffLabel: "Double Temps (20%)", islandBuffsTitle: "Buffs d'Île", vpBuffLabel: "Vice-Président (15%)",
+                otherBuffsTitle: "Autres Buffs", allianceBuffLabel: "Alliance (15%)", stateBuffLabel: "État (10%)",
+                resultsTitle: "Ressources Nécessaires", noSelection: "Sélectionnez au moins un bâtiment pour voir les ressources nécessaires.",
+                basicResourcesTitle: "Ressources de Base", specialResourcesTitle: "Ressources Spéciales", wood: "Bois:", coal: "Charbon:", iron: "Fer:", meat: "Viande:",
+                crystals: "Cristaux de Feu:", timeTitle: "Temps de Construction", normalTime: "Temps normal:", buffedTime: "Temps avec buffs:",
+                detailsTitle: "Détails des Améliorations", currentLevel: "Niveau actuel:", targetLevel: "Niveau cible:", from: "De", to: "à", level: "Niveau",
+                copy: "Copier", copied: "Copié!", furnace: "Chaudière (FC)", embassy: "Ambassade", infantryCamp: "Camp d'Infanterie", lancerCamp: "Camp de Lanciers",
+                marksmanCamp: "Camp de Tireurs", researchCenter: "Centre de Recherche", infirmary: "Infirmerie", commandCenter: "Centre de Commandement",
+                chiefsHouse: "Maison du Chef", sawmill: "Scierie", coalMine: "Mine de Charbon", ironMine: "Mine de Fer", huntersHut: "Cabane de Chasseur",
+                shelter: "Abri", cookhouse: "Cuisine", clinic: "Clinique", barricade: "Barricade", warAcademy: "Académie de Guerre",
+                storehouse: "Entrepôt", enlistmentOffice: "Bureau d'Enrôlement", days: "j", hours: "h", minutes: "m", seconds: "s",
+                phaseDetails: "Détails des Phases", resources: "Ressources", showDetails: "Afficher les phases détaillées", hideDetails: "Masquer les phases détaillées",
+                phase: "Phase", stage: "Étape",
+                navBuildings: "Calculateur Bâtiments", // NOUVEAU
+                navGear: "Calculateur Équipement" ,   // NOUVEAU
+                /* ----------- ZINMAN options ----------- */
+                zinmanNotUnlocked: "Non débloqué (0%)",
+                zinmanLevel1:      "Niveau 1 (3 %)",
+                zinmanLevel2:      "Niveau 2 (6 %)",
+                zinmanLevel3:      "Niveau 3 (9 %)",
+                zinmanLevel4:      "Niveau 4 (12 %)",
+                zinmanLevel5:      "Niveau 5 (15 %)"
+            }
+        };
+
+        // Building data --- MODIFIED Definitions ---
+        const buildings = [
+             { id: "furnace", name: { en: "Furnace (FC)", fr: "Chaudière (FC)" }, category: "utility", icon: "fa-fire", iconColor: "text-orange-500", maxLevel: "FC10", fcLevels: true },
+             { id: "embassy", name: { en: "Embassy", fr: "Ambassade" }, category: "utility", icon: "fa-building", iconColor: "text-gray-700", maxLevel: "FC10", fcLevels: true },
+             { id: "infantryCamp", name: { en: "Infantry Camp", fr: "Camp d'Infanterie" }, category: "military", icon: "fa-users", iconColor: "text-blue-500", maxLevel: "FC10", fcLevels: true },
+             { id: "lancerCamp", name: { en: "Lancer Camp", fr: "Camp de Lanciers" }, category: "military", icon: "fa-chess-knight", iconColor: "text-purple-500", maxLevel: "FC10", fcLevels: true },
+             { id: "marksmanCamp", name: { en: "Marksman Camp", fr: "Camp de Tireurs" }, category: "military", icon: "fa-bullseye", iconColor: "text-green-600", maxLevel: "FC10", fcLevels: true },
+             { id: "researchCenter", name: { en: "Research Center", fr: "Centre de Recherche" }, category: "utility", icon: "fa-flask", iconColor: "text-blue-600", maxLevel: 30, fcLevels: false },
+             { id: "infirmary", name: { en: "Infirmary", fr: "Infirmerie" }, category: "living", icon: "fa-first-aid", iconColor: "text-red-500", maxLevel: "FC10", fcLevels: true },
+             { id: "commandCenter", name: { en: "Command Center", fr: "Centre de Commandement" }, category: "utility", icon: "fa-landmark", iconColor: "text-yellow-500", maxLevel: "FC10", fcLevels: true },
+             { id: "chiefsHouse", name: { en: "Chief's House", fr: "Maison du Chef" }, category: "living", icon: "fa-home", iconColor: "text-yellow-700", maxLevel: 1, upgradeable: false, fcLevels: false }, // MODIFIED
+             { id: "sawmill", name: { en: "Sawmill", fr: "Scierie" }, category: "production", icon: "fa-tree", iconColor: "text-green-800", maxLevel: 30, fcLevels: false },
+             { id: "coalMine", name: { en: "Coal Mine", fr: "Mine de Charbon" }, category: "production", icon: "fa-mountain", iconColor: "text-gray-800", maxLevel: 30, fcLevels: false },
+             { id: "ironMine", name: { en: "Iron Mine", fr: "Mine de Fer" }, category: "production", icon: "fa-cog", iconColor: "text-gray-500", maxLevel: 30, fcLevels: false },
+             { id: "huntersHut", name: { en: "Hunter's Hut", fr: "Cabane de Chasseur" }, category: "production", icon: "fa-drumstick-bite", iconColor: "text-red-700", maxLevel: 30, fcLevels: false },
+             { id: "shelter", name: { en: "Shelter", fr: "Abri" }, category: "living", icon: "fa-house-user", iconColor: "text-indigo-500", maxLevel: 10, fcLevels: false },
+             { id: "cookhouse", name: { en: "Cookhouse", fr: "Cuisine" }, category: "living", icon: "fa-utensils", iconColor: "text-orange-600", maxLevel: 10, fcLevels: false },
+             { id: "clinic", name: { en: "Clinic", fr: "Clinique" }, category: "living", icon: "fa-hospital", iconColor: "text-pink-500", maxLevel: 10, fcLevels: false },
+             { id: "barricade", name: { en: "Barricade", fr: "Barricade" }, category: "utility", icon: "fa-shield-alt", iconColor: "text-yellow-600", maxLevel: 10, fcLevels: false }, // MODIFIED maxLevel
+             { id: "warAcademy", name: { en: "War Academy", fr: "Académie de Guerre" }, category: "military", icon: "fa-university", iconColor: "text-gray-700", minLevel: "FC1", maxLevel: "FC10", fcLevels: true }, // MODIFIED minLevel
+             { id: "storehouse", name: { en: "Storehouse", fr: "Entrepôt" }, category: "utility", icon: "fa-warehouse", iconColor: "text-brown-500", maxLevel: 30, fcLevels: false },
+             { id: "enlistmentOffice", name: { en: "Enlistment Office", fr: "Bureau d'Enrôlement" }, category: "military", icon: "fa-clipboard-list", iconColor: "text-blue-800", maxLevel: 1, upgradeable: false, fcLevels: false } // MODIFIED
+        ];
+
+        // Resource data
+        const resourceData = {
+            phaseResourceCosts: {
+                // Format: [wood, coal, iron, meat, crystals, time_in_minutes]
+                "FC1-1": [72000000, 14000000, 3600000, 72000000, 158, 10368],
+                "FC1-2": [72000000, 14000000, 3600000, 72000000, 158, 10368],
+                "FC1-3": [72000000, 14000000, 3600000, 72000000, 158, 10368],
+                "FC1-4": [72000000, 14000000, 3600000, 72000000, 158, 10368],
+                "FC1-5": [72000000, 14000000, 3600000, 72000000, 158, 10368], // Assumed based on FC1-4
+                "FC2-1": [79000000, 15000000, 3900000, 79000000, 238, 12672],
+                "FC2-2": [79000000, 15000000, 3900000, 79000000, 238, 12672],
+                "FC2-3": [79000000, 15000000, 3900000, 79000000, 238, 12672],
+                "FC2-4": [79000000, 15000000, 3900000, 79000000, 238, 12672],
+                "FC2-5": [79000000, 15000000, 3900000, 79000000, 238, 12672], // Assumed based on FC2-4
+                "FC3-1": [82000000, 16000000, 4100000, 82000000, 280, 13824],
+                "FC3-2": [82000000, 16000000, 4100000, 82000000, 280, 13824],
+                "FC3-3": [82000000, 16000000, 4100000, 82000000, 280, 13824],
+                "FC3-4": [82000000, 16000000, 4100000, 82000000, 280, 13824],
+                "FC3-5": [82000000, 16000000, 4100000, 82000000, 280, 13824], // Assumed based on FC3-4
+                "FC4-1": [84000000, 16000000, 4200000, 84000000, 335, 16128],
+                "FC4-2": [84000000, 16000000, 4200000, 84000000, 335, 16128],
+                "FC4-3": [84000000, 16000000, 4200000, 84000000, 335, 16128],
+                "FC4-4": [84000000, 16000000, 4200000, 84000000, 335, 16128],
+                "FC4-5": [84000000, 16000000, 4200000, 84000000, 335, 16128], // Assumed based on FC4-4
+                "FC5-1": [96000000, 19000000, 4800000, 96000000, 200, 17280],
+                "FC5-2": [96000000, 19000000, 4800000, 96000000, 200, 17280],
+                "FC5-3": [96000000, 19000000, 4800000, 96000000, 200, 17280],
+                "FC5-4": [96000000, 19000000, 4800000, 96000000, 200, 17280],
+                "FC5-5": [96000000, 19000000, 4800000, 96000000, 200, 17280], // Assumed based on FC5-4
+                "FC6-1": [100000000, 21000000, 5400000, 100000000, 240, 20736],
+                "FC6-2": [100000000, 21000000, 5400000, 100000000, 240, 20736],
+                "FC6-3": [100000000, 21000000, 5400000, 100000000, 240, 20736],
+                "FC6-4": [100000000, 21000000, 5400000, 100000000, 240, 20736],
+                "FC6-5": [100000000, 21000000, 5400000, 100000000, 240, 20736], // Assumed based on FC6-4
+                "FC7-1": [130000000, 26000000, 6600000, 130000000, 240, 23040],
+                "FC7-2": [130000000, 26000000, 6600000, 130000000, 240, 23040],
+                "FC7-3": [130000000, 26000000, 6600000, 130000000, 240, 23040],
+                "FC7-4": [130000000, 26000000, 6600000, 130000000, 240, 23040],
+                "FC7-5": [130000000, 26000000, 6600000, 130000000, 240, 23040], // Assumed based on FC7-4
+                "FC8-1": [140000000, 29000000, 7200000, 140000000, 280, 15000],
+                "FC8-2": [140000000, 29000000, 7200000, 140000000, 280, 15000],
+                "FC8-3": [140000000, 29000000, 7200000, 140000000, 280, 15000],
+                "FC8-4": [140000000, 29000000, 7200000, 140000000, 280, 15000],
+                "FC8-5": [140000000, 29000000, 7200000, 140000000, 280, 15000], // Assumed based on FC8-4
+                "FC9-1": [160000000, 33000000, 8400000, 160000000, 350, 23040],
+                "FC9-2": [160000000, 33000000, 8400000, 160000000, 350, 23040],
+                "FC9-3": [160000000, 33000000, 8400000, 160000000, 350, 23040],
+                "FC9-4": [160000000, 33000000, 8400000, 160000000, 350, 23040],
+                "FC9-5": [160000000, 33000000, 8400000, 160000000, 350, 23040], // Assumed based on FC9-4
+                // Note: Data for FC10 stages (FC10-1 to FC10-5) are missing. Add them if available.
+            },
+            // Multipliers for non-Furnace FC buildings
+            phaseMultipliers: {
+                embassy: 0.25, infantryCamp: 0.45, lancerCamp: 0.45,
+                marksmanCamp: 0.45, infirmary: 0.20, commandCenter: 0.20
+            },
+            // Base costs/time for levels 1-30 (Placeholders - Needs accurate per-level data)
+            baseResourceMultipliers: {
+                wood: { production: 1000000, living: 100000, utility: 5000000, military: 3000000 },
+                coal: { production: 200000, living: 20000, utility: 1000000, military: 600000 },
+                iron: { production: 50000, living: 5000, utility: 250000, military: 150000 },
+                meat: { production: 1000000, living: 100000, utility: 5000000, military: 3000000 }
+            },
+            timeMultipliers: {
+                production: 240, living: 120, utility: 720, military: 480
+            }
+        };
+
+        // State variables
+        let currentLanguage = 'en';
+        let darkMode = false;
+        let selectedBuildings = new Set();
+        let buildingLevels = {};
+        let detailsExpanded = {};
+
+        // Initialize building levels and expanded state --- MODIFIED ---
+        buildings.forEach(building => {
+            // Determine the starting level for the building
+            let initialLevel;
+             // Use minLevel if specified, otherwise default to 1
+             if (building.minLevel) {
+                initialLevel = building.minLevel; // Keep as string ('FC1') or number
+             } else {
+                 initialLevel = 1;
+             }
+            // Ensure non-upgradeable buildings start and end at maxLevel (which is 1)
+            if (building.upgradeable === false) {
+                initialLevel = building.maxLevel || 1;
+            }
+
+            // Determine the default target level
+            let initialTarget;
+            if (building.upgradeable === false) {
+                initialTarget = initialLevel; // Target is same as current if not upgradeable
+            } else {
+                initialTarget = building.maxLevel || initialLevel; // Default target to maxLevel, or current if no maxLevel
+            }
+
+
+            buildingLevels[building.id] = {
+                current: String(initialLevel), // Store as string
+                target: String(initialTarget)  // Store as string
+            };
+            detailsExpanded[building.id] = false;
+        });
+
+
+        // DOM elements
+        // ... (DOM elements selection unchanged) ...
+        const langToggle = document.getElementById('langToggle');
+        const themeToggle = document.getElementById('themeToggle');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const buildingsContainer = document.getElementById('buildingsContainer');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resourcesResults = document.getElementById('resourcesResults');
+        const noSelectionMessage = document.getElementById('noSelectionMessage');
+        const copyBtn = document.getElementById('copyBtn');
+        const buildingDetailsContainer = document.getElementById('buildingDetailsContainer');
+        const buildingDetailsList = document.getElementById('buildingDetailsList');
+        const searchInput = document.getElementById('searchInput');
+
+
+        // Initialize the UI
+        function initUI() { /* ... (implementation unchanged) ... */
+            if (localStorage.getItem('darkMode') === 'true') { darkMode = true; document.documentElement.classList.add('dark'); themeToggle.checked = true; } else { darkMode = false; document.documentElement.classList.remove('dark'); themeToggle.checked = false; } updateLanguage(); renderBuildings('all'); setupEventListeners(); updateCalculations();
+            // Marquer l'onglet actif
+            document.getElementById('nav-buildings')?.classList.add('nav-active');
+            document.getElementById('nav-gear')?.classList.remove('nav-active'); // Assurer que l'autre est inactif
+        }
+
+        // Update language --- MODIFIED ---
+        function updateLanguage() {
+            document.title = translations[currentLanguage].title;
+            document.getElementById('mainTitle').textContent = translations[currentLanguage].title;
+            langToggle.textContent = translations[currentLanguage].languageButton;
+            document.getElementById('themeLabel').textContent = translations[currentLanguage].themeLabel;
+            document.getElementById('allBuildingsTab').textContent = translations[currentLanguage].allBuildings;
+            document.getElementById('militaryTab').textContent = translations[currentLanguage].military;
+            document.getElementById('productionTab').textContent = translations[currentLanguage].production;
+            document.getElementById('livingTab').textContent = translations[currentLanguage].living;
+            document.getElementById('utilityTab').textContent = translations[currentLanguage].utility;
+            document.getElementById('selectionTitle').textContent = translations[currentLanguage].selectionTitle;
+            searchInput.placeholder = translations[currentLanguage].searchPlaceholder;
+            selectAllBtn.textContent = translations[currentLanguage].selectAll;
+            deselectAllBtn.textContent = translations[currentLanguage].deselectAll;
+            document.getElementById('buffsTitle').textContent = translations[currentLanguage].buffsTitle;
+            // Hero Buffs Section
+            document.getElementById('heroBuffsTitle').textContent = translations[currentLanguage].heroBuffsTitle;
+            document.getElementById('zinmanLevelLabel').textContent = translations[currentLanguage].zinmanLevelLabel; // Update Zinman Label
+            document.getElementById('zinmanTimeBuffLabel').textContent = translations[currentLanguage].zinmanTimeBuffLabel; // Update Time Buff Label
+
+            document.getElementById('vipBuffsTitle').textContent = translations[currentLanguage].vipBuffsTitle;
+            document.getElementById('vip4BuffLabel').textContent = translations[currentLanguage].vip4BuffLabel;
+            document.getElementById('vip9BuffLabel').textContent = translations[currentLanguage].vip9BuffLabel;
+            document.getElementById('petBuffsTitle').textContent = translations[currentLanguage].petBuffsTitle;
+            document.getElementById('hyenaBuffLabel').textContent = translations[currentLanguage].hyenaBuffLabel;
+            document.getElementById('chiefBuffsTitle').textContent = translations[currentLanguage].chiefBuffsTitle;
+            document.getElementById('doubleTimeBuffLabel').textContent = translations[currentLanguage].doubleTimeBuffLabel;
+            document.getElementById('islandBuffsTitle').textContent = translations[currentLanguage].islandBuffsTitle;
+            document.getElementById('vpBuffLabel').textContent = translations[currentLanguage].vpBuffLabel;
+            document.getElementById('otherBuffsTitle').textContent = translations[currentLanguage].otherBuffsTitle;
+            document.getElementById('allianceBuffLabel').textContent = translations[currentLanguage].allianceBuffLabel;
+            document.getElementById('stateBuffLabel').textContent = translations[currentLanguage].stateBuffLabel;
+            document.getElementById('resultsTitle').textContent = translations[currentLanguage].resultsTitle;
+            document.getElementById('noSelectionMessage').textContent = translations[currentLanguage].noSelection;
+            document.getElementById('basicResourcesTitle').textContent = translations[currentLanguage].basicResourcesTitle;
+            document.getElementById('specialResourcesTitle').textContent = translations[currentLanguage].specialResourcesTitle;
+            document.getElementById('woodLabel').textContent = translations[currentLanguage].wood;
+            document.getElementById('coalLabel').textContent = translations[currentLanguage].coal;
+            document.getElementById('ironLabel').textContent = translations[currentLanguage].iron;
+            document.getElementById('meatLabel').textContent = translations[currentLanguage].meat;
+            document.getElementById('crystalsLabel').textContent = translations[currentLanguage].crystals;
+            document.getElementById('timeTitle').textContent = translations[currentLanguage].timeTitle;
+            document.getElementById('normalTimeLabel').textContent = translations[currentLanguage].normalTime;
+            document.getElementById('buffedTimeLabel').textContent = translations[currentLanguage].buffedTime;
+            document.getElementById('detailsTitle').textContent = translations[currentLanguage].detailsTitle;
+            document.getElementById('zinmanOpt0').textContent = translations[currentLanguage].zinmanNotUnlocked;
+            document.getElementById('zinmanOpt1').textContent = translations[currentLanguage].zinmanLevel1;
+            document.getElementById('zinmanOpt2').textContent = translations[currentLanguage].zinmanLevel2;
+            document.getElementById('zinmanOpt3').textContent = translations[currentLanguage].zinmanLevel3;
+            document.getElementById('zinmanOpt4').textContent = translations[currentLanguage].zinmanLevel4;
+            document.getElementById('zinmanOpt5').textContent = translations[currentLanguage].zinmanLevel5;
+
+            copyBtn.title = translations[currentLanguage].copy;
+            renderBuildings(document.querySelector('.tab-btn.border-blue-500').dataset.category);
+            updateBuildingDetails(calculateResources().detailedPhases);
+        }
+
+        // Toggle theme
+        function toggleTheme() { /* ... (implementation unchanged) ... */
+            darkMode = !darkMode; if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('darkMode', 'true'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('darkMode', 'false'); }
+        }
+
+       // Helper to parse level
+       function parseLevel(level) { /* ... (implementation unchanged) ... */
+           if (typeof level === 'string' && level.startsWith('FC')) { const numPart = level.substring(2); return numPart.match(/^\d+$/) ? 30 + parseInt(numPart) : 0; } const parsedInt = parseInt(level); return isNaN(parsedInt) ? 0 : parsedInt;
+       }
+
+
+        // Render buildings - MODIFIED for non-upgradeable display
+        function renderBuildings(category) {
+            buildingsContainer.innerHTML = '';
+            const searchTerm = searchInput.value.toLowerCase().trim();
+
+            buildings.forEach(building => {
+                const buildingName = building.name[currentLanguage].toLowerCase();
+                const categoryMatch = category === 'all' || building.category === category;
+                const searchMatch = searchTerm === '' || buildingName.includes(searchTerm);
+
+                if (categoryMatch && searchMatch) {
+                    const isSelected = selectedBuildings.has(building.id);
+                    const isUpgradeable = building.upgradeable !== false; // Check if explicitly set to false
+                    const card = document.createElement('div');
+                    card.className = `building-card border rounded-lg p-4 flex flex-col items-center cursor-pointer transition-colors duration-150 ${isSelected ? 'selected border-green-500 bg-green-50 dark:bg-opacity-10' : 'border-gray-200 dark:border-gray-600'} dark:bg-gray-700`;
+                    card.dataset.id = building.id;
+
+                    // Determine level display part
+                    let levelDisplayHtml = '';
+                    if (isUpgradeable) {
+                        levelDisplayHtml = `
+                        <div class="flex justify-between items-center">
+                            <label for="current-${building.id}" class="mr-2">${translations[currentLanguage].currentLevel}:</label>
+                            <select id="current-${building.id}" class="current-level p-1 border rounded w-1/2 dark:bg-gray-600 dark:border-gray-500" data-id="${building.id}">
+                                ${generateLevelOptions(building, 'current')}
+                            </select>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <label for="target-${building.id}" class="mr-2">${translations[currentLanguage].targetLevel}:</label>
+                            <select id="target-${building.id}" class="target-level p-1 border rounded w-1/2 dark:bg-gray-600 dark:border-gray-500" data-id="${building.id}">
+                                ${generateLevelOptions(building, 'target')}
+                            </select>
+                        </div>`;
+                    } else {
+                         // Display fixed level for non-upgradeable buildings
+                         levelDisplayHtml = `
+                         <div class="flex justify-center items-center text-center">
+                             <span>${translations[currentLanguage].level}: ${buildingLevels[building.id].current}</span>
+                         </div>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="mb-2"><i class="fas ${building.icon} ${building.iconColor} text-3xl"></i></div>
+                        <h3 class="text-center mb-2 font-medium">${building.name[currentLanguage]}</h3>
+                        <div class="mt-auto w-full text-sm space-y-1">
+                            ${levelDisplayHtml}
+                        </div>`;
+
+                    buildingsContainer.appendChild(card);
+
+                    // Add event listeners only if upgradeable
+                    if (isUpgradeable) {
+                        const currentLevelSelect = card.querySelector('.current-level');
+                        const targetLevelSelect = card.querySelector('.target-level');
+
+                        if (currentLevelSelect) currentLevelSelect.value = buildingLevels[building.id].current;
+                        if (targetLevelSelect) targetLevelSelect.value = buildingLevels[building.id].target;
+
+                        card.addEventListener('click', (e) => {
+                            if (!e.target.closest('select')) {
+                                toggleBuildingSelection(building.id);
+                            }
+                        });
+
+                        currentLevelSelect?.addEventListener('change', (e) => {
+                            const newCurrentLevel = e.target.value; buildingLevels[building.id].current = newCurrentLevel;
+                            let currentNumeric = parseLevel(newCurrentLevel); let targetNumeric = parseLevel(buildingLevels[building.id].target);
+                            targetLevelSelect.innerHTML = generateLevelOptions(building, 'target');
+                            if (currentNumeric >= targetNumeric) { buildingLevels[building.id].target = newCurrentLevel; targetLevelSelect.value = newCurrentLevel; }
+                            else { targetLevelSelect.value = buildingLevels[building.id].target; }
+                            updateCalculations();
+                        });
+
+                        targetLevelSelect?.addEventListener('change', (e) => {
+                            buildingLevels[building.id].target = e.target.value; updateCalculations();
+                        });
+                    } else {
+                         card.addEventListener('click', () => { toggleBuildingSelection(building.id); });
+                    }
+                }
+            });
+        }
+
+
+        // Generate level options --- MODIFIED for minLevel and maxLevel ---
+        function generateLevelOptions(building, type) {
+            if (building.upgradeable === false) return ''; // No options if not upgradeable
+            let options = '';
+            const currentLevelRaw = buildingLevels[building.id].current;
+            const targetLevelRaw = buildingLevels[building.id].target;
+            const currentNumeric = parseLevel(currentLevelRaw);
+
+            let minLevelNumeric = building.minLevel ? parseLevel(building.minLevel) : 1;
+            let maxLevelNumeric;
+            if (building.fcLevels) {
+                 maxLevelNumeric = building.maxLevel ? parseLevel(building.maxLevel) : 40;
+            } else {
+                 maxLevelNumeric = building.maxLevel || 1;
+            }
+
+            const loopStart = (type === 'current') ? minLevelNumeric : Math.max(minLevelNumeric, currentNumeric);
+            const loopEnd = maxLevelNumeric;
+
+            for (let i = loopStart; i <= loopEnd; i++) {
+                let levelValue; let levelDisplay;
+                if (building.fcLevels && i > 30) { levelValue = `FC${i - 30}`; levelDisplay = levelValue; }
+                else { levelValue = String(i); levelDisplay = i; }
+
+                // No need to check `i < loopStart` for target here, loop starts correctly
+
+                const selected = (type === 'current' && String(currentLevelRaw) === levelValue) || (type === 'target' && String(targetLevelRaw) === levelValue);
+                options += `<option value="${levelValue}" ${selected ? 'selected' : ''}>${levelDisplay}</option>`;
+            }
+
+            if (type === 'target' && options === '') { const displayValue = currentLevelRaw; options += `<option value="${displayValue}" selected>${displayValue}</option>`; }
+            return options;
+        }
+
+        // Toggle building selection
+        function toggleBuildingSelection(buildingId) { /* ... (implementation unchanged) ... */
+            const card = document.querySelector(`.building-card[data-id="${buildingId}"]`); if (selectedBuildings.has(buildingId)) { selectedBuildings.delete(buildingId); card?.classList.remove('selected', 'border-green-500', 'bg-green-50', 'dark:bg-opacity-10'); card?.classList.add('border-gray-200', 'dark:border-gray-600'); detailsExpanded[buildingId] = false; } else { selectedBuildings.add(buildingId); card?.classList.add('selected', 'border-green-500', 'bg-green-50', 'dark:bg-opacity-10'); card?.classList.remove('border-gray-200', 'dark:border-gray-600'); } updateCalculations();
+        }
+
+        // Select/Deselect all visible buildings
+        function selectAllBuildings() { /* ... (implementation unchanged) ... */
+             const cards = buildingsContainer.querySelectorAll('.building-card'); cards.forEach(card => { const id = card.dataset.id; if (!selectedBuildings.has(id)) { selectedBuildings.add(id); card.classList.add('selected', 'border-green-500', 'bg-green-50', 'dark:bg-opacity-10'); card.classList.remove('border-gray-200', 'dark:border-gray-600'); } }); updateCalculations();
+        }
+        function deselectAllBuildings() { /* ... (implementation unchanged) ... */
+            const cards = buildingsContainer.querySelectorAll('.building-card'); cards.forEach(card => { const id = card.dataset.id; if (selectedBuildings.has(id)) { selectedBuildings.delete(id); card.classList.remove('selected', 'border-green-500', 'bg-green-50', 'dark:bg-opacity-10'); card.classList.add('border-gray-200', 'dark:border-gray-600'); detailsExpanded[id] = false; } }); updateCalculations();
+        }
+
+
+        // Calculate resources needed --- MODIFIED for Zinman Reduction ---
+        function calculateResources() {
+            let totals = { wood: 0, coal: 0, iron: 0, meat: 0, crystals: 0, time: 0, detailedPhases: {} };
+            // Get Zinman reduction factor
+            const zinmanReduction = parseFloat(document.getElementById('zinmanLevelSelect')?.value || 0);
+
+            selectedBuildings.forEach(id => {
+                const building = buildings.find(b => b.id === id);
+                if (!building || building.upgradeable === false) return; // Skip non-upgradeable
+
+                const levels = buildingLevels[id];
+                const buildingPhases = [];
+                let currentNumeric = parseLevel(levels.current);
+                let targetNumeric = parseLevel(levels.target);
+                totals.detailedPhases[id] = buildingPhases;
+
+                for (let level = currentNumeric + 1; level <= targetNumeric; level++) {
+                    let phaseData = { wood: 0, coal: 0, iron: 0, meat: 0, crystals: 0, time: 0 };
+                    let levelDisplay = level <= 30 ? level : `FC${level - 30}`;
+                    let prevLevelDisplay = (level - 1) <= 30 ? (level - 1) : `FC${level - 1 - 30}`;
+                    const subPhaseDetails = [];
+
+                    if (building.fcLevels && level > 30) {
+                        // --- FC Level Calculation ---
+                        const fcLevelBeingCompleted = level - 30;
+                        const fcLevelIndexForCosts = fcLevelBeingCompleted - 1;
+                        let buildingMultiplier = (building.id === 'furnace' || !resourceData.phaseMultipliers[id]) ? 1 : resourceData.phaseMultipliers[id];
+                        let currentPhaseKeyPrefix = (fcLevelIndexForCosts === 0) ? "FC1" : `FC${fcLevelIndexForCosts}`;
+
+                        for (let stage = 1; stage <= 5; stage++) {
+                            const phaseKey = `${currentPhaseKeyPrefix}-${stage}`;
+                            if (resourceData.phaseResourceCosts[phaseKey]) {
+                                const costs = resourceData.phaseResourceCosts[phaseKey];
+                                // Calculate base costs for the stage
+                                let stageWood = Math.round(costs[0] * buildingMultiplier);
+                                let stageCoal = Math.round(costs[1] * buildingMultiplier);
+                                let stageIron = Math.round(costs[2] * buildingMultiplier);
+                                let stageMeat = Math.round(costs[3] * buildingMultiplier);
+                                const stageCrystals = Math.round(costs[4] * buildingMultiplier); // No RSS reduction
+                                const stageTime = Math.round(costs[5] * buildingMultiplier); // No RSS reduction
+
+                                // *** Apply Zinman RSS reduction ***
+                                stageWood = Math.round(stageWood * (1 - zinmanReduction));
+                                stageCoal = Math.round(stageCoal * (1 - zinmanReduction));
+                                stageIron = Math.round(stageIron * (1 - zinmanReduction));
+                                stageMeat = Math.round(stageMeat * (1 - zinmanReduction));
+                                // *** --- ***
+
+                                const stageCosts = {
+                                    wood: stageWood, coal: stageCoal, iron: stageIron, meat: stageMeat,
+                                    crystals: stageCrystals, time: stageTime,
+                                    stageLabel: `${currentPhaseKeyPrefix}-${stage}`
+                                };
+
+                                phaseData.wood += stageCosts.wood; phaseData.coal += stageCosts.coal; phaseData.iron += stageCosts.iron; phaseData.meat += stageCosts.meat;
+                                phaseData.crystals += stageCosts.crystals; phaseData.time += stageCosts.time;
+                                subPhaseDetails.push(stageCosts);
+                            } else { console.warn(`Missing cost data for key: ${phaseKey}`); }
+                        }
+                    } else {
+                        // --- Regular Level Calculation (1-30) ---
+                        const category = building.category;
+                        // Get base costs (placeholders need real data)
+                        phaseData.wood = resourceData.baseResourceMultipliers.wood[category] || 0;
+                        phaseData.coal = resourceData.baseResourceMultipliers.coal[category] || 0;
+                        phaseData.iron = resourceData.baseResourceMultipliers.iron[category] || 0;
+                        phaseData.meat = resourceData.baseResourceMultipliers.meat[category] || 0;
+                        phaseData.time = resourceData.timeMultipliers[category] || 0;
+                        phaseData.crystals = 0; // No crystals for regular
+
+                        // *** Apply Zinman RSS reduction ***
+                        phaseData.wood = Math.round(phaseData.wood * (1 - zinmanReduction));
+                        phaseData.coal = Math.round(phaseData.coal * (1 - zinmanReduction));
+                        phaseData.iron = Math.round(phaseData.iron * (1 - zinmanReduction));
+                        phaseData.meat = Math.round(phaseData.meat * (1 - zinmanReduction));
+                         // *** --- ***
+                    }
+
+                    // Add calculated & reduced costs for this level upgrade to overall totals
+                    totals.wood += phaseData.wood; totals.coal += phaseData.coal; totals.iron += phaseData.iron; totals.meat += phaseData.meat;
+                    totals.crystals += phaseData.crystals; totals.time += phaseData.time;
+
+                    // Store details (already reduced) for this level upgrade step
+                    const phaseInfo = {
+                    phase: `${prevLevelDisplay} ${translations[currentLanguage].to} ${levelDisplay}`,
+                    ...phaseData             // ← on étale ici wood, coal, iron, meat, crystals, time
+                    };
+                    if (subPhaseDetails.length > 0) {
+                    phaseInfo.details = subPhaseDetails;
+                    }
+                    buildingPhases.push(phaseInfo);
+
+                }
+            });
+            return totals;
+        }
+
+
+        // Format number
+        function formatNumber(num) { /* ... (implementation unchanged) ... */
+             if (num === 0) return '0'; const absNum = Math.abs(num); const abbreviations = { en: ['', 'K', 'M', 'B', 'T'], fr: ['', 'k', 'M', 'Md', 'T'] }; const langAbbr = abbreviations[currentLanguage]; let tier = 0; if (absNum >= 1000) tier = Math.floor(Math.log10(absNum) / 3); if (tier === 0) return num.toLocaleString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US'); const suffix = langAbbr[Math.min(tier, langAbbr.length - 1)] || ''; const scale = Math.pow(1000, tier); const scaled = num / scale; let decimals = 0; if (scaled < 10 && scaled !== Math.floor(scaled)) decimals = 2; else if (scaled < 100 && scaled !== Math.floor(scaled)) decimals = 1; const formatter = new Intl.NumberFormat(currentLanguage === 'fr' ? 'fr-FR' : 'en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); return formatter.format(scaled) + suffix;
+        }
+
+        // Format time
+        function formatTime(minutes) { /* ... (implementation unchanged) ... */
+            minutes = Math.round(minutes); if (minutes <= 0) return `0${translations[currentLanguage].minutes}`; const days = Math.floor(minutes / 1440); const hours = Math.floor((minutes % 1440) / 60); const mins = minutes % 60; let result = ''; if (days > 0) result += `${days}${translations[currentLanguage].days} `; if (hours > 0) result += `${hours}${translations[currentLanguage].hours} `; if (mins > 0 || (days === 0 && hours === 0)) result += `${mins}${translations[currentLanguage].minutes}`; return result.trim();
+        }
+
+        // Calculate total TIME reduction percentage --- MODIFIED ---
+        function calculateBuffReduction() {
+            let speedIncrease = 0;
+            // Check if Zinman *time* buff checkbox exists and is checked
+            if (document.getElementById('zinmanTimeBuff')?.checked) speedIncrease += 0.15; // Using the specific ID for time buff
+            if (document.getElementById('vip9Buff')?.checked) speedIncrease += 0.20;
+             else if (document.getElementById('vip4Buff')?.checked) speedIncrease += 0.10;
+            if (document.getElementById('hyenaBuff')?.checked) speedIncrease += 0.15;
+            if (document.getElementById('doubleTimeBuff')?.checked) speedIncrease += 0.20;
+            if (document.getElementById('vpBuff')?.checked) speedIncrease += 0.15;
+            if (document.getElementById('allianceBuff')?.checked) speedIncrease += 0.15;
+            if (document.getElementById('stateBuff')?.checked) speedIncrease += 0.10;
+            return speedIncrease;
+        }
+
+
+        // Update calculations display
+        function updateCalculations() { /* ... (implementation unchanged) ... */
+            const resources = calculateResources(); const hasSelection = selectedBuildings.size > 0; resourcesResults.classList.toggle('hidden', !hasSelection); noSelectionMessage.classList.toggle('hidden', hasSelection); buildingDetailsContainer.style.display = hasSelection ? '' : 'none'; copyBtn.disabled = !hasSelection; if(hasSelection) { document.getElementById('woodResult').textContent = formatNumber(resources.wood); document.getElementById('coalResult').textContent = formatNumber(resources.coal); document.getElementById('ironResult').textContent = formatNumber(resources.iron); document.getElementById('meatResult').textContent = formatNumber(resources.meat); document.getElementById('crystalsResult').textContent = formatNumber(resources.crystals); const normalTime = resources.time; document.getElementById('normalTimeResult').textContent = formatTime(normalTime); const speedIncrease = calculateBuffReduction(); const buffedTime = (1 + speedIncrease > 0) ? normalTime / (1 + speedIncrease) : normalTime; document.getElementById('buffedTimeResult').textContent = formatTime(buffedTime); } updateBuildingDetails(resources.detailedPhases);
+        }
+
+
+        // Update building details view - MODIFIED for non-upgradeable display logic
+        // Update building details view - MODIFIED for non-upgradeable display logic and ADDED EXPAND/COLLAPSE LOGIC
+        function updateBuildingDetails(detailedPhases = {}) {
+            buildingDetailsList.innerHTML = '';
+            // Sort selected buildings (example: by name) - Keep your existing sort logic if you have one
+             const sortedBuildingIds = Array.from(selectedBuildings).sort((a, b) => {
+                 const nameA = buildings.find(bldg => bldg.id === a)?.name[currentLanguage] || '';
+                 const nameB = buildings.find(bldg => bldg.id === b)?.name[currentLanguage] || '';
+                 return nameA.localeCompare(nameB);
+             });
+
+
+            sortedBuildingIds.forEach(buildingId => {
+                const building = buildings.find(b => b.id === buildingId);
+                if (!building) return;
+
+                const levels = buildingLevels[buildingId];
+                const phasesForBuilding = detailedPhases[buildingId] || [];
+                const detailItem = document.createElement('div');
+                detailItem.className = 'p-3 border rounded mb-4 dark:border-gray-600';
+                // Use the stored state for initial expansion
+                const isExpanded = detailsExpanded[buildingId];
+                const isUpgradeable = building.upgradeable !== false;
+
+                // Generate Header HTML (Unchanged, but ensures icon matches isExpanded state)
+                const levelText = isUpgradeable ?
+                    `${translations[currentLanguage].from} ${levels.current} ${translations[currentLanguage].to} ${levels.target}` :
+                    `${translations[currentLanguage].level}: ${levels.current}`;
+                const headerHtml = `
+                    <div class="flex items-center justify-between ${isUpgradeable ? 'cursor-pointer' : ''}" ${isUpgradeable ? `data-building-id="${buildingId}"` : ''}>
+                        <div class="flex items-center">
+                            <i class="fas ${building.icon} ${building.iconColor} text-xl mr-3"></i>
+                            <div>
+                                <h3 class="font-semibold">${building.name[currentLanguage]}</h3>
+                                <p class="text-sm">${levelText}</p>
+                            </div>
+                        </div>
+                        ${isUpgradeable ? `<i class="fas ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} text-blue-500 transition-transform duration-200"></i>` : ''}
+                    </div>`;
+
+                // Generate Details Section HTML (Unchanged from your code)
+                const detailsSection = document.createElement('div');
+                 // Start hidden based on isExpanded state
+                detailsSection.className = `mt-3 border-t pt-3 dark:border-gray-600 ${isExpanded && isUpgradeable ? '' : 'hidden'}`;
+                detailsSection.id = `details-${buildingId}`;
+                let detailsHtml = '';
+
+                if (isUpgradeable && phasesForBuilding.length > 0) {
+                     phasesForBuilding.forEach(phase => {
+                         // ... (Your existing phase detail generation logic - including subphases) ...
+                         // Ensure your existing logic correctly generates the 'detailsHtml' string here
+                         // Example structure (ensure it matches your current output):
+                         const hasSubphases = phase.details && phase.details.length > 0;
+                         const subPhaseContainerId = hasSubphases ? `subphase-${building.id}-${phase.phase.replace(/[^a-zA-Z0-9]/g, '')}` : null;
+                         detailsHtml += `<div class="mb-4">`;
+                         detailsHtml += `<h4 class="font-semibold text-blue-600 dark:text-blue-400">${phase.phase}</h4>`;
+                         // Add resource details for the phase...
+                         // === RESSOURCES DU PHASE ===
+                        detailsHtml += `
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
+                            ${phase.wood      ? `<div><i class="fas fa-tree text-yellow-700 w-4"></i> ${translations[currentLanguage].wood} ${formatNumber(phase.wood)}</div>` : ''}
+                            ${phase.coal      ? `<div><i class="fas fa-fire-alt text-gray-700 w-4"></i> ${translations[currentLanguage].coal} ${formatNumber(phase.coal)}</div>` : ''}
+                            ${phase.iron      ? `<div><i class="fas fa-hammer text-gray-500 w-4"></i> ${translations[currentLanguage].iron} ${formatNumber(phase.iron)}</div>` : ''}
+                            ${phase.meat      ? `<div><i class="fas fa-drumstick-bite text-red-500 w-4"></i> ${translations[currentLanguage].meat} ${formatNumber(phase.meat)}</div>` : ''}
+                            ${phase.crystals  ? `<div><i class="fas fa-gem text-orange-500 w-4"></i> ${translations[currentLanguage].crystals} ${formatNumber(phase.crystals)}</div>` : ''}
+                            <div><i class="fas fa-clock text-blue-500 w-4"></i> ${translations[currentLanguage].timeTitle} ${formatTime(phase.time)}</div>
+                        </div>`;
+                         
+                        if (hasSubphases) {
+                            detailsHtml += `<div class="mt-2">`;
+                            // Le bouton pour dérouler/réduire
+                            detailsHtml += `
+                                <div class="cursor-pointer flex items-center text-blue-500 dark:text-blue-400 text-xs"
+                                    data-subphase-toggle="${subPhaseContainerId}" aria-expanded="false">
+                                <i class="fas fa-plus-circle mr-1"></i>
+                                <span>${translations[currentLanguage].showDetails}</span>
+                                </div>`;
+
+                            // Conteneur caché par défaut pour toutes les sous-phases
+                            detailsHtml += `<div id="${subPhaseContainerId}" class="hidden mt-2">`;
+
+                            // On boucle sur chaque subphase
+                            phase.details.forEach(subphase => {
+                                detailsHtml += `
+                                <div class="mb-3">
+                                    <h5 class="font-semibold text-xs mb-1">
+                                    ${subphase.stageLabel || subphase.stage || ''}
+                                    </h5>
+                                    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                    ${subphase.wood     ? `<div><i class="fas fa-tree text-yellow-700 w-3"></i> ${translations[currentLanguage].wood} ${formatNumber(subphase.wood)}</div>` : ''}
+                                    ${subphase.coal     ? `<div><i class="fas fa-fire-alt text-gray-700 w-3"></i> ${translations[currentLanguage].coal} ${formatNumber(subphase.coal)}</div>` : ''}
+                                    ${subphase.iron     ? `<div><i class="fas fa-hammer text-gray-500 w-3"></i> ${translations[currentLanguage].iron} ${formatNumber(subphase.iron)}</div>` : ''}
+                                    ${subphase.meat     ? `<div><i class="fas fa-drumstick-bite text-red-500 w-3"></i> ${translations[currentLanguage].meat} ${formatNumber(subphase.meat)}</div>` : ''}
+                                    ${subphase.crystals ? `<div><i class="fas fa-gem text-orange-500 w-3"></i> ${translations[currentLanguage].crystals} ${formatNumber(subphase.crystals)}</div>` : ''}
+                                    <div>
+                                        <i class="fas fa-clock text-blue-500 w-3"></i>
+                                        ${translations[currentLanguage].timeTitle} ${formatTime(subphase.time)}
+                                    </div>
+                                    </div>
+                                </div>`;
+                            });
+
+                            detailsHtml += `</div>`;       // ferme le container des sub-phases
+                            detailsHtml += `</div>`;       // ferme le bloc global
+                            }
+
+                         
+                     });
+                 } else if (isUpgradeable && phasesForBuilding.length === 0 && parseLevel(levels.target) > parseLevel(levels.current)) {
+                     // Handle case where upgradeable but no *calculated* phases (e.g., missing data)
+                     detailsHtml = `<p class="text-gray-500 italic text-sm">No phase data available for this upgrade range.</p>`;
+                 } else if (isUpgradeable && parseLevel(levels.target) <= parseLevel(levels.current)) {
+                     // Handle case where upgradeable but no upgrade selected (target <= current)
+                     detailsHtml = `<p class="text-gray-500 italic text-sm">Target level must be higher than current level to show details.</p>`;
+                 } // No specific message needed for non-upgradeable in details section
+
+
+                detailsSection.innerHTML = detailsHtml;
+                detailItem.innerHTML = headerHtml;
+                if (isUpgradeable) { detailItem.appendChild(detailsSection); } // Only append details if upgradeable
+                buildingDetailsList.appendChild(detailItem);
+
+                // --- START: IMPLEMENTED EXPAND/COLLAPSE LOGIC ---
+                if (isUpgradeable) {
+                    const header = detailItem.querySelector(`[data-building-id="${buildingId}"]`);
+                    header?.addEventListener('click', () => {
+                        // Toggle the stored state
+                        detailsExpanded[buildingId] = !detailsExpanded[buildingId];
+                        const currentlyExpanded = detailsExpanded[buildingId]; // Use the new state
+
+                        // Get the elements to update
+                        const detailsDiv = document.getElementById(`details-${buildingId}`);
+                        const icon = header.querySelector('.fas.fa-chevron-up, .fas.fa-chevron-down');
+
+                        // Toggle visibility and icon based on the new state
+                        if (currentlyExpanded) {
+                            detailsDiv?.classList.remove('hidden');
+                            icon?.classList.remove('fa-chevron-down');
+                            icon?.classList.add('fa-chevron-up');
+                        } else {
+                            detailsDiv?.classList.add('hidden');
+                            icon?.classList.remove('fa-chevron-up');
+                            icon?.classList.add('fa-chevron-down');
+                             // Optional: Collapse sub-phases when the main detail section is collapsed
+                             detailsDiv?.querySelectorAll('[data-subphase-toggle][aria-expanded="true"]').forEach(toggle => {
+                                 toggleSubphase(toggle, false); // Assuming toggleSubphase handles UI changes
+                             });
+                        }
+                    });
+
+                    // --- START: IMPLEMENTED SUB-PHASE TOGGLE LOGIC ---
+                    detailsSection.querySelectorAll('[data-subphase-toggle]').forEach(toggle => {
+                        toggle.addEventListener('click', () => {
+                            const currentlyExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                            // Toggle the state by calling the helper function
+                            toggleSubphase(toggle, !currentlyExpanded);
+                        });
+                    });
+                    // --- END: IMPLEMENTED SUB-PHASE TOGGLE LOGIC ---
+                }
+                 // --- END: IMPLEMENTED EXPAND/COLLAPSE LOGIC ---
+            });
+             // Ensure the main container is visible if there are selected buildings
+            buildingDetailsContainer.style.display = selectedBuildings.size > 0 ? '' : 'none';
+        }
+
+
+        // Helper function to toggle subphase visibility - Ensure this is implemented correctly
+        function toggleSubphase(toggleElement, expand) {
+            const targetId = toggleElement.getAttribute('data-subphase-toggle');
+             if (!targetId) return;
+             const subphaseContainer = document.getElementById(targetId);
+             const icon = toggleElement.querySelector('i');
+             const textSpan = toggleElement.querySelector('span');
+
+             if (expand) {
+                 subphaseContainer?.classList.remove('hidden');
+                 toggleElement.setAttribute('aria-expanded', 'true');
+                 icon?.classList.remove('fa-plus-circle');
+                 icon?.classList.add('fa-minus-circle');
+                 if(textSpan) textSpan.textContent = translations[currentLanguage].hideDetails;
+             } else {
+                 subphaseContainer?.classList.add('hidden');
+                 toggleElement.setAttribute('aria-expanded', 'false');
+                 icon?.classList.remove('fa-minus-circle');
+                 icon?.classList.add('fa-plus-circle');
+                 if(textSpan) textSpan.textContent = translations[currentLanguage].showDetails;
+             }
+        }
+
+
+        // Helper function to toggle subphase visibility
+        function toggleSubphase(toggleElement, expand = null) {
+        // ID du conteneur à ouvrir / fermer
+        const targetId = toggleElement.getAttribute('data-subphase-toggle');
+        if (!targetId) return;
+
+        const subContainer = document.getElementById(targetId);
+        const icon        = toggleElement.querySelector('i');
+        const textSpan    = toggleElement.querySelector('span');
+
+        // Si `expand` n’est pas précisé, on inverse l’état courant
+        const shouldExpand = (expand !== null) ? expand :
+                            toggleElement.getAttribute('aria-expanded') !== 'true';
+
+        if (shouldExpand) {
+            subContainer?.classList.remove('hidden');
+            toggleElement.setAttribute('aria-expanded', 'true');
+            icon?.classList.replace('fa-plus-circle', 'fa-minus-circle');
+            if (textSpan) textSpan.textContent = translations[currentLanguage].hideDetails;
+        } else {
+            subContainer?.classList.add('hidden');
+            toggleElement.setAttribute('aria-expanded', 'false');
+            icon?.classList.replace('fa-minus-circle', 'fa-plus-circle');
+            if (textSpan) textSpan.textContent = translations[currentLanguage].showDetails;
+        }
+    }
+
+        /* ---------- Copier les résultats (RSS & temps) dans le presse‑papiers ---------- */
+        function copyResultsToClipboard() {
+            if (selectedBuildings.size === 0) return;                // rien à copier
+
+            const tr  = translations[currentLanguage];
+            const res = calculateResources();                        // déjà réduits par Zinman
+
+            let out  = `${tr.title}\n\n${tr.resultsTitle}\n`;
+            out += `• ${tr.wood}  ${formatNumber(res.wood)}\n`;
+            out += `• ${tr.coal}  ${formatNumber(res.coal)}\n`;
+            out += `• ${tr.iron}  ${formatNumber(res.iron)}\n`;
+            out += `• ${tr.meat}  ${formatNumber(res.meat)}\n`;
+            out += `• ${tr.crystals}  ${formatNumber(res.crystals)}\n`;
+            out += `• ${tr.timeTitle}  ${formatTime(res.time)}\n`;
+
+            out += `\n${tr.detailsTitle}\n`;
+
+            // Détail par bâtiment + phases
+            selectedBuildings.forEach(id => {
+                const b   = buildings.find(x => x.id === id);
+                const lv  = buildingLevels[id];
+                out += `\n${b.name[currentLanguage]} : ${tr.from} ${lv.current} ${tr.to} ${lv.target}\n`;
+
+                const phases = res.detailedPhases[id] || [];
+                phases.forEach(ph => {
+                    out += `  - ${ph.phase}\n`;
+                    out += `      ${tr.wood} ${formatNumber(ph.wood)}, `
+                        + `${tr.coal} ${formatNumber(ph.coal)}, `
+                        + `${tr.iron} ${formatNumber(ph.iron)}, `
+                        + `${tr.meat} ${formatNumber(ph.meat)}, `
+                        + `${tr.crystals} ${formatNumber(ph.crystals)}, `
+                        + `${tr.timeTitle} ${formatTime(ph.time)}\n`;
+
+                    (ph.details || []).forEach(sp => {
+                        out += `        · ${sp.stageLabel || sp.stage} : `
+                            + `${tr.wood} ${formatNumber(sp.wood)}, `
+                            + `${tr.coal} ${formatNumber(sp.coal)}, `
+                            + `${tr.iron} ${formatNumber(sp.iron)}, `
+                            + `${tr.meat} ${formatNumber(sp.meat)}, `
+                            + `${tr.crystals} ${formatNumber(sp.crystals)}, `
+                            + `${tr.timeTitle} ${formatTime(sp.time)}\n`;
+                    });
+                });
+            });
+
+            navigator.clipboard.writeText(out).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy"></i>'; }, 2000);
+            });
+        }
+
+        // Set up event listeners --- MODIFIED ---
+        function setupEventListeners() {
+            langToggle.addEventListener('click', () => { currentLanguage = currentLanguage === 'en' ? 'fr' : 'en'; updateLanguage(); });
+            themeToggle.addEventListener('change', toggleTheme);
+            searchInput.addEventListener('input', () => { renderBuildings(document.querySelector('.tab-btn.border-blue-500').dataset.category); });
+            tabButtons.forEach(button => { button.addEventListener('click', () => { /* ... tab logic ... */ renderBuildings(button.dataset.category); }); });
+            selectAllBtn.addEventListener('click', selectAllBuildings);
+            deselectAllBtn.addEventListener('click', deselectAllBuildings);
+
+            // Listener for Zinman Level Dropdown (for RSS reduction)
+            document.getElementById('zinmanLevelSelect')?.addEventListener('change', updateCalculations);
+
+            // Listeners for other TIME buffs
+            const timeBuffCheckboxes = [ 'zinmanTimeBuff', 'vip4Buff', 'vip9Buff', 'hyenaBuff', 'doubleTimeBuff', 'vpBuff', 'allianceBuff', 'stateBuff' ];
+            timeBuffCheckboxes.forEach(id => { document.getElementById(id)?.addEventListener('change', updateCalculations); });
+
+            // VIP non-stacking logic (for TIME buffs)
+            document.getElementById('vip4Buff')?.addEventListener('change', () => { if (document.getElementById('vip4Buff').checked && document.getElementById('vip9Buff').checked) { document.getElementById('vip9Buff').checked = false; } updateCalculations(); });
+            document.getElementById('vip9Buff')?.addEventListener('change', () => { if (document.getElementById('vip9Buff').checked && document.getElementById('vip4Buff').checked) { document.getElementById('vip4Buff').checked = false; } updateCalculations(); });
+
+            copyBtn.addEventListener('click', copyResultsToClipboard);
+        }
+
+        // Initialize
+        initUI();
+    </script>
+</body>
+</html>
