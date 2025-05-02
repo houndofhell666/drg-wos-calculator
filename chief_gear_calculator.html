@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiteout Survival - Chiefs Gear Calculator</title>
+    <!-- Tailwind & Font‑Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+
+    <style>
+        /* --- styles identiques à la première version (compactés) --- */
+        .gear-card{transition:all .3s ease;border:1px solid #e5e7eb}.gear-card:hover{transform:translateY(-5px);border-color:#9ca3af}.selected{border-color:#4CAF50!important;background-color:rgba(76,175,80,.1)}body{min-height:100vh}.dark{color-scheme:dark}.dark body{background-color:#1a1a1a;color:#f3f4f6}.dark .bg-white{background-color:#2d3748}.dark .text-gray-700{color:#a0aec0}.dark .text-gray-500{color:#718096}.dark .border,.dark .border-gray-200,.dark .border-b{border-color:#4a5568}.dark .shadow-md{box-shadow:0 4px 6px -1px rgba(0,0,0,.3),0 2px 4px -1px rgba(0,0,0,.2)}.dark select,.dark input[type="number"]{background-color:#4a5568;border-color:#718096;color:#f3f4f6}#themeToggle:checked+span{background-color:#2563eb}#themeToggle:checked+span::before{transform:translateX(1.5rem)}.dark input[type="number"]::-webkit-inner-spin-button,.dark input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.dark input[type="number"]{-moz-appearance:textfield}.text-required{color:#3b82f6}.text-user{color:#ef4444}.text-remaining{color:#22c55e}.dark .text-required{color:#60a5fa}.dark .text-user{color:#f87171}.dark .text-remaining{color:#4ade80}select option{font-size:.875rem}#inventoryGrid{grid-template-columns:repeat(1,minmax(0,1fr))}@media (min-width:768px){#inventoryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}#materialsResultsGrid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:.5rem}.nav-active{border-bottom:2px solid #3b82f6;color:#3b82f6}.dark .nav-active{border-bottom-color:#60a5fa;color:#60a5fa}
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="container mx-auto px-4 py-8">
+    <!-- ‑‑‑‑‑ HEADER ‑‑‑‑‑ -->
+    <header class="flex justify-between items-center mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-user-shield text-blue-500 text-2xl mr-2"></i>
+            <h1 class="text-2xl font-bold" id="mainTitle">Whiteout Survival - Chiefs Gear Calculator</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="langToggle" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">Français</button>
+            <div class="flex items-center">
+                <span class="mr-2" id="themeLabel">Theme:</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input id="themeToggle" type="checkbox" class="sr-only peer">
+                    <span class="w-12 h-6 bg-gray-300 rounded-full peer dark:bg-gray-600 peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+    <!-- ‑‑‑‑‑ NAV ‑‑‑‑‑ -->
+    <nav class="mb-6 flex justify-start space-x-4 border-b border-gray-300 dark:border-gray-600 pb-2">
+        <a href="WOSVx.html" id="nav-buildings" class="px-4 py-2 rounded-t-lg font-medium text-sm transition">Buildings Calculator</a>
+        <a href="chief_gear_calculator.html" id="nav-gear" class="px-4 py-2 rounded-t-lg font-medium text-sm transition">Gear Calculator</a>
+    </nav>
+
+    <!-- ‑‑‑‑‑ MAIN GRID ‑‑‑‑‑ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- SELECTION -->    
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <h2 class="text-xl font-semibold mb-4" id="selectionTitle">Select Gear Levels</h2>
+                <div id="gearContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+        <!-- INVENTORY & RESULTS -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <h2 class="text-xl font-semibold mb-4" id="inventoryTitle">Your Current Materials</h2>
+                <div id="inventoryGrid" class="grid gap-4">
+                    <div class="flex items-center">
+                        <label for="userAlloyInput" class="flex items-center mr-2 whitespace-nowrap">
+                            <i class="fas fa-cube text-gray-500 w-5 mr-1"></i><span id="userAlloyLabel">Hardened Alloy:</span>
+                        </label>
+                        <input type="number" id="userAlloyInput" min="0" value="0" class="p-1 border rounded w-full dark:bg-gray-600 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center">
+                        <label for="userSolutionInput" class="flex items-center mr-2 whitespace-nowrap">
+                            <i class="fas fa-flask text-green-500 w-5 mr-1"></i><span id="userSolutionLabel">Polishing solution:</span>
+                        </label>
+                        <input type="number" id="userSolutionInput" min="0" value="0" class="p-1 border rounded w-full dark:bg-gray-600 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center">
+                        <label for="userPlanInput" class="flex items-center mr-2 whitespace-nowrap">
+                            <i class="fas fa-scroll text-yellow-500 w-5 mr-1"></i><span id="userPlanLabel">Design plan:</span>
+                        </label>
+                        <input type="number" id="userPlanInput" min="0" value="0" class="p-1 border rounded w-full dark:bg-gray-600 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center">
+                        <label for="userAmberInput" class="flex items-center mr-2 whitespace-nowrap">
+                            <i class="fas fa-moon text-indigo-400 w-5 mr-1"></i><span id="userAmberLabel">Lunar Amber:</span>
+                        </label>
+                        <input type="number" id="userAmberInput" min="0" value="0" class="p-1 border rounded w-full dark:bg-gray-600 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+            <!-- RESULTS -->
+            <div class="bg-white rounded-lg shadow-md p-4 border border-blue-500 relative">
+                <button id="copyBtn" class="absolute top-2 right-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-copy"></i>
+                </button>
+                <h2 class="text-xl font-semibold mb-4" id="resultsTitle">Required Materials</h2>
+                <div id="resultsContainer">
+                    <p id="noSelectionMessage" class="text-gray-500 italic">Set levels for at least one gear piece to see the required materials.</p>
+                    <div id="materialsResults" class="hidden">
+                        <div class="flex items-center flex-wrap mb-2 border-b pb-2 dark:border-gray-600">
+                            <div class="flex items-center mr-4 mb-1 md:mb-0">
+                                <i class="fas fa-cube text-gray-500 w-5 mr-1"></i><span class="mr-1" id="alloyLabel">Hardened Alloy:</span>
+                            </div>
+                            <span class="ml-auto font-semibold text-sm md:text-base">
+                                <span id="requiredAlloy" class="text-required" title="Total Required">0</span> - <span id="userAlloy" class="text-user" title="You Have">0</span> = <span id="remainingAlloy" class="text-remaining" title="Remaining Needed">0</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center flex-wrap mb-2 border-b pb-2 dark:border-gray-600">
+                            <div class="flex items-center mr-4 mb-1 md:mb-0">
+                                <i class="fas fa-flask text-green-500 w-5 mr-1"></i><span class="mr-1" id="solutionLabel">Polishing solution:</span>
+                            </div>
+                            <span class="ml-auto font-semibold text-sm md:text-base">
+                                <span id="requiredSolution" class="text-required" title="Total Required">0</span> - <span id="userSolution" class="text-user" title="You Have">0</span> = <span id="remainingSolution" class="text-remaining" title="Remaining Needed">0</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center flex-wrap mb-2 border-b pb-2 dark:border-gray-600">
+                            <div class="flex items-center mr-4 mb-1 md:mb-0">
+                                <i class="fas fa-scroll text-yellow-500 w-5 mr-1"></i><span class="mr-1" id="planLabel">Design plan:</span>
+                            </div>
+                            <span class="ml-auto font-semibold text-sm md:text-base">
+                                <span id="requiredPlan" class="text-required" title="Total Required">0</span> - <span id="userPlan" class="text-user" title="You Have">0</span> = <span id="remainingPlan" class="text-remaining" title="Remaining Needed">0</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center flex-wrap mb-2 dark:border-gray-600">
+                            <div class="flex items-center mr-4 mb-1 md:mb-0">
+                                <i class="fas fa-moon text-indigo-400 w-5 mr-1"></i><span class="mr-1" id="amberLabel">Lunar Amber:</span>
+                            </div>
+                            <span class="ml-auto font-semibold text-sm md:text-base">
+                                <span id="requiredAmber" class="text-required" title="Total Required">0</span> - <span id="userAmber" class="text-user" title="You Have">0</span> = <span id="remainingAmber" class="text-remaining" title="Remaining Needed">0</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ‑‑‑‑‑ SCRIPT ‑‑‑‑‑ -->
+<script>
+// === Translations ===
+const translations = {
+  en: {
+    title: "Whiteout Survival - Chiefs Gear Calculator",
+    languageButton: "Français",
+    themeLabel: "Theme:",
+    selectionTitle: "Select Gear Levels",
+    inventoryTitle: "Your Current Materials",
+    userAlloyLabel: "Hardened Alloy:",
+    userSolutionLabel: "Polishing solution:",
+    userPlanLabel: "Design plan:",
+    userAmberLabel: "Lunar Amber:",
+    resultsTitle: "Required Materials",
+    noSelection: "Set levels for at least one gear piece to see the required materials.",
+    alloyLabel: "Hardened Alloy:",
+    solutionLabel: "Polishing solution:",
+    planLabel: "Design plan:",
+    amberLabel: "Lunar Amber:",
+    currentLevel: "Current:",
+    targetLevel: "Target:",
+    level: "Level",
+    copy: "Copy Results",
+    copied: "Copied!",
+    gear1: "Winter Hat",
+    gear2: "Durable Watch",
+    gear3: "Dawn's Pride",
+    gear4: "Triumph's Stride",
+    gear5: "Ring of Eureka",
+    gear6: "Starfire's Melody",
+    totalRequired: "Total Required",
+    youHave: "You Have",
+    remainingNeeded: "Remaining Needed"
+  },
+  fr: {
+    title: "Whiteout Survival - Calculateur Équipement Chef",
+    languageButton: "English",
+    themeLabel: "Thème:",
+    selectionTitle: "Sélectionner Niveaux Équipement",
+    inventoryTitle: "Vos Matériaux Actuels",
+    userAlloyLabel: "Alliage Durci:",
+    userSolutionLabel: "Solution de Polissage:",
+    userPlanLabel: "Plan de Conception:",
+    userAmberLabel: "Ambre Lunaire:",
+    resultsTitle: "Matériaux Requis",
+    noSelection: "Définissez les niveaux pour au moins une pièce d'équipement pour voir les matériaux requis.",
+    alloyLabel: "Alliage Durci:",
+    solutionLabel: "Solution de Polissage:",
+    planLabel: "Plan de Conception:",
+    amberLabel: "Ambre Lunaire:",
+    currentLevel: "Actuel:",
+    targetLevel: "Cible:",
+    level: "Niveau",
+    copy: "Copier Résultats",
+    copied: "Copié!",
+    gear1: "Chapeau d'Hiver",
+    gear2: "Montre Durable",
+    gear3: "Fierté de l'Aube",
+    gear4: "Allure du Triomphe",
+    gear5: "Anneau d'Eurêka",
+    gear6: "Mélodie de Feu Stellaire",
+    totalRequired: "Total Requis",
+    youHave: "Vous Avez",
+    remainingNeeded: "Restant Nécessaire"
+  }
+};
+
+// === Level names (unchanged) ===
+const gearLevelNames = [
+  null,"Green","Green *","Blue","Blue *","Blue **","Blue ***","Purple","Purple *","Purple **","Purple ***","Purple T1","Purple T1 *","Purple T1 **","Purple T1 ***","Gold","Gold *","Gold **","Gold ***","Gold T1","Gold T1 *","Gold T1 **","Gold T1 ***","Gold T2","Gold T2 *","Gold T2 **","Gold T2 ***","Pink","Pink *","Pink **","Pink ***","Pink T1","Pink T1 *","Pink T1 **","Pink T1 ***","Pink T2","Pink T2 *","Pink T2 **","Pink T2 ***","Pink T3","Pink T3 *","Pink T3 **","Pink T3 ****"
+];
+const MAX_GEAR_LEVEL = 42;
+
+// === Gear pieces (renamed & icons swapped) ===
+const gearPieces = [
+  {
+    id: "gear1",
+    name: { en: "Winter Hat", fr: "Chapeau d'Hiver" },
+    icon: "fa-hat-wizard",
+    iconColor: "text-gray-600",
+    maxLevel: MAX_GEAR_LEVEL
+  },
+  {
+    id: "gear2",
+    name: { en: "Durable Watch", fr: "Montre Durable" },
+    icon: "fa-stopwatch",
+    iconColor: "text-blue-600",
+    maxLevel: MAX_GEAR_LEVEL
+  },
+  {
+    id: "gear3",
+    name: { en: "Dawn's Pride", fr: "Fierté de l'Aube" },
+    icon: "fa-tshirt",
+    iconColor: "text-green-600",
+    maxLevel: MAX_GEAR_LEVEL
+  },
+  {
+    id: "gear4",
+    name: { en: "Triumph's Stride", fr: "Allure du Triomphe" },
+    icon: "fa-shoe-prints",
+    iconColor: "text-yellow-700",
+    maxLevel: MAX_GEAR_LEVEL
+  },
+  // accessory before weapon (as requested previously)
+  {
+    id: "gear5",
+    name: { en: "Ring of Eureka", fr: "Anneau d'Eurêka" },
+    icon: "fa-ring",
+    iconColor: "text-red-600",
+    maxLevel: MAX_GEAR_LEVEL
+  },
+  {
+    id: "gear6",
+    name: { en: "Starfire's Melody", fr: "Mélodie de Feu Stellaire" },
+    icon: "fa-wand-sparkles",
+    iconColor: "text-purple-600",
+    maxLevel: MAX_GEAR_LEVEL
+  }
+  
+];
+
+// === Upgrade costs (déjà mis à jour précédemment) ===
+const gearUpgradeCosts = [
+  null,
+  { alloy: 1500,  solution: 15,   plan: 0,   amber: 0 },
+  { alloy: 3800,  solution: 40,   plan: 0,   amber: 0 },
+  { alloy: 7000,  solution: 70,   plan: 0,   amber: 0 },
+  { alloy: 9700,  solution: 95,   plan: 0,   amber: 0 },
+  { alloy: 0,     solution: 0,    plan: 45,  amber: 0 },
+  { alloy: 0,     solution: 0,    plan: 50,  amber: 0 },
+  { alloy: 0,     solution: 0,    plan: 60,  amber: 0 },
+  { alloy: 0,     solution: 0,    plan: 70,  amber: 0 },
+  { alloy: 6500,  solution: 65,   plan: 40,  amber: 0 },
+  { alloy: 8000,  solution: 80,   plan: 50,  amber: 0 },
+  { alloy: 10000, solution: 95,   plan: 60,  amber: 0 },
+  { alloy: 11000, solution: 110,  plan: 70,  amber: 0 },
+  { alloy: 13000, solution: 130,  plan: 85,  amber: 0 },
+  { alloy: 15000, solution: 160,  plan: 100, amber: 0 },
+  { alloy: 22000, solution: 220,  plan: 40,  amber: 0 },
+  { alloy: 23000, solution: 230,  plan: 40,  amber: 0 },
+  { alloy: 25000, solution: 250,  plan: 45,  amber: 0 },
+  { alloy: 26000, solution: 260,  plan: 45,  amber: 0 },
+  { alloy: 28000, solution: 280,  plan: 45,  amber: 0 },
+  { alloy: 30000, solution: 300,  plan: 55,  amber: 0 },
+  { alloy: 32000, solution: 320,  plan: 55,  amber: 0 },
+  { alloy: 35000, solution: 340,  plan: 55,  amber: 0 },
+  { alloy: 38000, solution: 390,  plan: 55,  amber: 0 },
+  { alloy: 43000, solution: 430,  plan: 75,  amber: 0 },
+  { alloy: 45000, solution: 460,  plan: 80,  amber: 0 },
+  { alloy: 48000, solution: 500,  plan: 85,  amber: 0 },
+  { alloy: 50000, solution: 530,  plan: 85,  amber: 10 },
+  { alloy: 52000, solution: 560,  plan: 90,  amber: 10 },
+  { alloy: 54000, solution: 590,  plan: 95,  amber: 10 },
+  { alloy: 56000, solution: 620,  plan: 100, amber: 10 },
+  { alloy: 59000, solution: 670,  plan: 110, amber: 15 },
+  { alloy: 61000, solution: 700,  plan: 115, amber: 15 },
+  { alloy: 63000, solution: 730,  plan: 120, amber: 15 },
+  { alloy: 65000, solution: 760,  plan: 125, amber: 15 },
+  { alloy: 68000, solution: 810,  plan: 135, amber: 20 },
+  { alloy: 70000, solution: 840,  plan: 140, amber: 20 },
+  { alloy: 72000, solution: 870,  plan: 145, amber: 20 },
+  { alloy: 74000, solution: 900,  plan: 150, amber: 20 },
+  { alloy: 77000, solution: 950,  plan: 160, amber: 25 },
+  { alloy: 80000, solution: 990,  plan: 165, amber: 25 },
+  { alloy: 83000, solution: 1030, plan: 170, amber: 25 },
+  { alloy: 86000, solution: 1070, plan: 180, amber: 25 }
+];
+
+// === State ===
+let currentLanguage = 'en';
+let darkMode = false;
+let gearLevels = {};
+let userMaterials = { alloy: 0, solution: 0, plan: 0, amber: 0 };
+gearPieces.forEach(g => { gearLevels[g.id] = { current: 1, target: 1 }; });
+
+// === DOM elements ===
+let mainTitleElement, langToggle, themeToggle, themeLabelElement, selectionTitleLabel;
+let gearContainer, inventoryTitleLabel, userAlloyLabel, userSolutionLabel, userPlanLabel, userAmberLabel;
+let userAlloyInput, userSolutionInput, userPlanInput, userAmberInput;
+let resultsTitleLabel, alloyLabel, solutionLabel, planLabel, amberLabel;
+let resultsContainer, materialsResults, noSelectionMessage, copyBtn;
+let requiredAlloySpan, userAlloySpan, remainingAlloySpan;
+let requiredSolutionSpan, userSolutionSpan, remainingSolutionSpan;
+let requiredPlanSpan, userPlanSpan, remainingPlanSpan;
+let requiredAmberSpan, userAmberSpan, remainingAmberSpan;
+
+function cacheDOM() {
+  mainTitleElement = document.getElementById('mainTitle');
+  langToggle = document.getElementById('langToggle');
+  themeToggle = document.getElementById('themeToggle');
+  themeLabelElement = document.getElementById('themeLabel');
+  selectionTitleLabel = document.getElementById('selectionTitle');
+  gearContainer = document.getElementById('gearContainer');
+  inventoryTitleLabel = document.getElementById('inventoryTitle');
+  userAlloyLabel = document.getElementById('userAlloyLabel');
+  userSolutionLabel = document.getElementById('userSolutionLabel');
+  userPlanLabel = document.getElementById('userPlanLabel');
+  userAmberLabel = document.getElementById('userAmberLabel');
+  userAlloyInput = document.getElementById('userAlloyInput');
+  userSolutionInput = document.getElementById('userSolutionInput');
+  userPlanInput = document.getElementById('userPlanInput');
+  userAmberInput = document.getElementById('userAmberInput');
+  resultsTitleLabel = document.getElementById('resultsTitle');
+  resultsContainer = document.getElementById('resultsContainer');
+  materialsResults = document.getElementById('materialsResults');
+  noSelectionMessage = document.getElementById('noSelectionMessage');
+  copyBtn = document.getElementById('copyBtn');
+  alloyLabel = document.getElementById('alloyLabel');
+  solutionLabel = document.getElementById('solutionLabel');
+  planLabel = document.getElementById('planLabel');
+  amberLabel = document.getElementById('amberLabel');
+  requiredAlloySpan = document.getElementById('requiredAlloy');
+  userAlloySpan = document.getElementById('userAlloy');
+  remainingAlloySpan = document.getElementById('remainingAlloy');
+  requiredSolutionSpan = document.getElementById('requiredSolution');
+  userSolutionSpan = document.getElementById('userSolution');
+  remainingSolutionSpan = document.getElementById('remainingSolution');
+  requiredPlanSpan = document.getElementById('requiredPlan');
+  userPlanSpan = document.getElementById('userPlan');
+  remainingPlanSpan = document.getElementById('remainingPlan');
+  requiredAmberSpan = document.getElementById('requiredAmber');
+  userAmberSpan = document.getElementById('userAmber');
+  remainingAmberSpan = document.getElementById('remainingAmber');
+}
+
+// === UI translations ===
+function translateUI() {
+  const t = translations[currentLanguage];
+  document.title = t.title;
+  mainTitleElement.textContent = t.title;
+  langToggle.textContent = t.languageButton;
+  themeLabelElement.textContent = t.themeLabel;
+  selectionTitleLabel.textContent = t.selectionTitle;
+  inventoryTitleLabel.textContent = t.inventoryTitle;
+  userAlloyLabel.textContent = t.userAlloyLabel;
+  userSolutionLabel.textContent = t.userSolutionLabel;
+  userPlanLabel.textContent = t.userPlanLabel;
+  userAmberLabel.textContent = t.userAmberLabel;
+  resultsTitleLabel.textContent = t.resultsTitle;
+  noSelectionMessage.textContent = t.noSelection;
+  alloyLabel.textContent = t.alloyLabel;
+  solutionLabel.textContent = t.solutionLabel;
+  planLabel.textContent = t.planLabel;
+  amberLabel.textContent = t.amberLabel;
+  requiredAlloySpan.title = t.totalRequired;
+  userAlloySpan.title = t.youHave;
+  remainingAlloySpan.title = t.remainingNeeded;
+  requiredSolutionSpan.title = t.totalRequired;
+  userSolutionSpan.title = t.youHave;
+  remainingSolutionSpan.title = t.remainingNeeded;
+  requiredPlanSpan.title = t.totalRequired;
+  userPlanSpan.title = t.youHave;
+  remainingPlanSpan.title = t.remainingNeeded;
+  requiredAmberSpan.title = t.totalRequired;
+  userAmberSpan.title = t.youHave;
+  remainingAmberSpan.title = t.remainingNeeded;
+
+  renderGearCards();
+  updateCalculations();
+}
+
+function renderGearCards() {
+  gearContainer.innerHTML = '';
+  const t = translations[currentLanguage];
+  gearPieces.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'gear-card bg-white rounded-lg p-4 flex flex-col items-center dark:bg-gray-700';
+    card.dataset.id = g.id;
+    card.innerHTML = `
+      <div class="mb-2"><i class="fas ${g.icon} ${g.iconColor} text-3xl"></i></div>
+      <h3 class="text-center mb-2 font-medium">${g.name[currentLanguage]}</h3>
+      <div class="mt-auto w-full text-sm space-y-1">
+        <div class="flex justify-between items-center">
+          <label for="current-${g.id}" class="mr-1">${t.currentLevel}</label>
+          <select id="current-${g.id}" class="current-level p-1 border rounded w-1/2 dark:bg-gray-600 dark:border-gray-500" data-id="${g.id}">
+            ${generateLevelOptions(g, 'current')}
+          </select>
+        </div>
+        <div class="flex justify-between items-center">
+          <label for="target-${g.id}" class="mr-1">${t.targetLevel}</label>
+          <select id="target-${g.id}" class="target-level p-1 border rounded w-1/2 dark:bg-gray-600 dark:border-gray-500" data-id="${g.id}">
+            ${generateLevelOptions(g, 'target')}
+          </select>
+        </div>
+      </div>`;
+
+    gearContainer.appendChild(card);
+
+    const currentSelect = card.querySelector('.current-level');
+    const targetSelect = card.querySelector('.target-level');
+    currentSelect.value = gearLevels[g.id].current;
+    targetSelect.value = gearLevels[g.id].target;
+
+    currentSelect.addEventListener('change', onLevelChange);
+    targetSelect.addEventListener('change', onLevelChange);
+  });
+}
+
+function generateLevelOptions(gear, type) {
+  let options = '';
+  const current = parseInt(gearLevels[gear.id].current);
+  const target = parseInt(gearLevels[gear.id].target);
+  const start = type === 'target' ? current : 1;
+  for (let i = start; i <= gear.maxLevel; i++) {
+    const selected = (type === 'current' && i === current) || (type === 'target' && i === target);
+    options += `<option value="${i}" ${selected ? 'selected' : ''}>${gearLevelNames[i] || `Lvl ${i}`}</option>`;
+  }
+  return options;
+}
+
+function onLevelChange(e) {
+  const id = e.target.dataset.id;
+  const isCurrent = e.target.classList.contains('current-level');
+  gearLevels[id][isCurrent ? 'current' : 'target'] = parseInt(e.target.value);
+  if (isCurrent) {
+    const targetSel = document.getElementById(`target-${id}`);
+    if (gearLevels[id].target < gearLevels[id].current) gearLevels[id].target = gearLevels[id].current;
+    targetSel.innerHTML = generateLevelOptions(gearPieces.find(p => p.id === id), 'target');
+    targetSel.value = gearLevels[id].target;
+  }
+  updateCalculations();
+}
+
+function onUserMaterialInput(e) {
+  const key = e.target.id.replace('user', '').replace('Input', '').toLowerCase();
+  userMaterials[key] = Math.max(0, parseInt(e.target.value) || 0);
+  localStorage.setItem('userMaterials', JSON.stringify(userMaterials));
+  updateCalculations();
+}
+
+function calcRequired() {
+  let r = { alloy: 0, solution: 0, plan: 0, amber: 0, has: false };
+  gearPieces.forEach(g => {
+    const cur = gearLevels[g.id].current;
+    const tgt = gearLevels[g.id].target;
+    if (tgt > cur) {
+      r.has = true;
+      for (let lvl = cur + 1; lvl <= tgt; lvl++) {
+        const c = gearUpgradeCosts[lvl] || { alloy: 0, solution: 0, plan: 0, amber: 0 };
+        r.alloy += c.alloy;
+        r.solution += c.solution;
+        r.plan += c.plan;
+        r.amber += c.amber;
+      }
+    }
+  });
+  return r;
+}
+
+function format(num) {
+  if (num === 0) return '0';
+  const abs = Math.abs(num);
+  if (abs < 10000) return num.toLocaleString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US');
+  const suffixes = currentLanguage === 'fr' ? ['','k','M','Md','T'] : ['','K','M','B','T'];
+  const tier = Math.floor(Math.log10(abs) / 3);
+  const scaled = num / Math.pow(1000, tier);
+  const decimals = scaled < 10 ? 2 : scaled < 100 ? 1 : 0;
+  return scaled.toLocaleString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals}) + suffixes[tier];
+}
+
+function updateCalculations() {
+  const r = calcRequired();
+  const show = r.has || Object.values(userMaterials).some(v => v > 0);
+  if (!show) {
+    materialsResults.classList.add('hidden');
+    noSelectionMessage.classList.remove('hidden');
+    copyBtn.disabled = true;
+    return;
+  }
+  materialsResults.classList.remove('hidden');
+  noSelectionMessage.classList.add('hidden');
+  copyBtn.disabled = !r.has;
+
+  const remAlloy = Math.max(0, r.alloy - userMaterials.alloy);
+  const remSol   = Math.max(0, r.solution - userMaterials.solution);
+  const remPlan  = Math.max(0, r.plan - userMaterials.plan);
+  const remAm    = Math.max(0, r.amber - userMaterials.amber);
+
+  requiredAlloySpan.textContent    = format(r.alloy);
+  userAlloySpan.textContent        = format(userMaterials.alloy);
+  remainingAlloySpan.textContent   = format(remAlloy);
+  requiredSolutionSpan.textContent = format(r.solution);
+  userSolutionSpan.textContent     = format(userMaterials.solution);
+  remainingSolutionSpan.textContent= format(remSol);
+  requiredPlanSpan.textContent     = format(r.plan);
+  userPlanSpan.textContent         = format(userMaterials.plan);
+  remainingPlanSpan.textContent    = format(remPlan);
+  requiredAmberSpan.textContent    = format(r.amber);
+  userAmberSpan.textContent        = format(userMaterials.amber);
+  remainingAmberSpan.textContent   = format(remAm);
+}
+
+function copyResults() {
+  if (copyBtn.disabled) return;
+  const t = translations[currentLanguage];
+  const r = calcRequired();
+  const remAlloy = Math.max(0, r.alloy - userMaterials.alloy);
+  const remSol   = Math.max(0, r.solution - userMaterials.solution);
+  const remPlan  = Math.max(0, r.plan - userMaterials.plan);
+  const remAm    = Math.max(0, r.amber - userMaterials.amber);
+  let text = `${t.title}\n\n${t.resultsTitle}:\n`+
+             `* ${t.alloyLabel} ${format(r.alloy)} (${t.remainingNeeded}: ${format(remAlloy)})\n`+
+             `* ${t.solutionLabel} ${format(r.solution)} (${t.remainingNeeded}: ${format(remSol)})\n`+
+             `* ${t.planLabel} ${format(r.plan)} (${t.remainingNeeded}: ${format(remPlan)})\n`+
+             `* ${t.amberLabel} ${format(r.amber)} (${t.remainingNeeded}: ${format(remAm)})\n\n`+
+             `Levels:\n`;
+  gearPieces.forEach(g => {
+    const cur = gearLevels[g.id].current;
+    const tgt = gearLevels[g.id].target;
+    if (tgt > cur) text += `- ${g.name[currentLanguage]}: ${gearLevelNames[cur]} -> ${gearLevelNames[tgt]}\n`;
+  });
+  navigator.clipboard.writeText(text).then(()=>{
+    const old = copyBtn.innerHTML;
+    copyBtn.innerHTML = '<i class="fas fa-check text-white"></i>';
+    setTimeout(()=>{copyBtn.innerHTML = old;},2000);
+  });
+}
+
+function loadUserMaterials() {
+  const saved = localStorage.getItem('userMaterials');
+  if (saved) try { userMaterials = JSON.parse(saved); } catch(e) {}
+  userAlloyInput.value    = userMaterials.alloy;
+  userSolutionInput.value = userMaterials.solution;
+  userPlanInput.value     = userMaterials.plan;
+  userAmberInput.value    = userMaterials.amber;
+}
+
+function init() {
+  cacheDOM();
+
+  if (localStorage.getItem('darkMode') === 'true') {
+    darkMode = true;
+    document.documentElement.classList.add('dark');
+    themeToggle.checked = true;
+  }
+
+  loadUserMaterials();
+  translateUI();
+
+  // listeners
+  langToggle.addEventListener('click', () => {
+    currentLanguage = currentLanguage === 'en' ? 'fr' : 'en';
+    translateUI();
+  });
+  themeToggle.addEventListener('change', () => {
+    darkMode = !darkMode;
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('darkMode', darkMode ? 'true' : 'false');
+  });
+  userAlloyInput.addEventListener('input', onUserMaterialInput);
+  userSolutionInput.addEventListener('input', onUserMaterialInput);
+  userPlanInput.addEventListener('input', onUserMaterialInput);
+  userAmberInput.addEventListener('input', onUserMaterialInput);
+  copyBtn.addEventListener('click', copyResults);
+
+  // mark active tab
+  document.getElementById('nav-gear')?.classList.add('nav-active');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
